@@ -15,33 +15,57 @@
 
 - fcitx5 5.1 以上，使用預設的 classic UI（在 Pop!_OS 24.04 + COSMIC + fcitx5 5.1.7 測試過）
 - 字型：Fira Sans、Noto Serif CJK TC（Debian / Ubuntu 的 `fonts-noto-cjk-extra`）
-- Python 3.11 以上和 `python3-gi`：產生主題和背景同步服務都會用到
+- `python3-gi`：背景同步服務會用到；從原始碼重新產生主題還需要 Python 3.11 以上
 - librsvg 的 gdk-pixbuf 載入器（`librsvg2-common`），fcitx5 才能讀 SVG 圖片
 - systemd 使用者工作階段：用來執行深淺色同步服務（沒有也能安裝，只是 GTK、Qt 程式會一直是淺色，見下方）
 
 ## 安裝
 
+### 從 Release 安裝（建議）
+
+到 [Releases](https://github.com/NoWaY233851/fcitx5-notepaper/releases) 下載 `fcitx5-notepaper-<版本>.tar.gz`（不是 GitHub 自動附的 Source code），解壓縮後執行 `install.sh`：
+
 ```bash
+tar xf fcitx5-notepaper-1.0.0.tar.gz
+cd fcitx5-notepaper-1.0.0
 ./install.sh
 ```
 
-它會做這幾件事：
+安裝程式會把自己複製到 `~/.local/share/fcitx5-notepaper/` 再從那裡安裝，所以裝好之後，下載的檔案和解壓縮的資料夾都可以刪掉。
 
-1. 把 `dist/notepaper`、`dist/notepaper-dark` 連結到 `~/.local/share/fcitx5/themes/`。
-2. 把字型別名 `dist/fontconfig/60-notepaper.conf` 連結到 `~/.config/fontconfig/conf.d/`。這個別名定義了一個叫 `Notepaper` 的字族：先用 Fira Sans，缺字再用 Noto Serif CJK TC Medium。只有指名要 `Notepaper` 的程式會受影響。
-3. 把 `dist/classicui.conf` 的設定合併進 `~/.config/fcitx5/conf/classicui.conf`。第一次安裝前會把原本的檔案備份成 `classicui.conf.before-notepaper`。
+### 從原始碼安裝
+
+```bash
+git clone https://github.com/NoWaY233851/fcitx5-notepaper.git
+cd fcitx5-notepaper
+./install.sh
+```
+
+從 git checkout 安裝時，主題和服務都是**連結到這個資料夾**，改了 token 重新產生後會立刻生效，但**不能搬動或刪除這個資料夾**。如果搬了，在新位置重新執行一次 `./install.sh` 就好。
+
+### 安裝時會做的事
+
+1. 把淺色、深色主題連結到 `~/.local/share/fcitx5/themes/`。
+2. 把字型別名 `60-notepaper.conf` 連結到 `~/.config/fontconfig/conf.d/`。這個別名定義了一個叫 `Notepaper` 的字族：先用 Fira Sans，缺字再用 Noto Serif CJK TC Medium。只有指名要 `Notepaper` 的程式會受影響。
+3. 把字型、主題、深色主題等設定合併進 `~/.config/fcitx5/conf/classicui.conf`。第一次安裝前會把原本的檔案備份成 `classicui.conf.before-notepaper`。
 4. 安裝並啟動 systemd 使用者服務 `notepaper-theme-sync`，讓 GTK、Qt 程式的候選窗也跟著深淺色切換。
 5. 重新載入 fcitx5。如果字型別名是新的或剛改過，會直接重啟 fcitx5，因為 fcitx5 只在啟動時讀一次字型設定。
 
-主題和服務都是連結到這個資料夾，所以**不要搬動或刪除這個資料夾**。如果搬了，在新位置重新執行一次 `./install.sh` 就好。
-
 ## 解除安裝
+
+從 Release 安裝的：
+
+```bash
+~/.local/share/fcitx5-notepaper/install.sh --uninstall
+```
+
+從原始碼安裝的，在專案資料夾裡執行：
 
 ```bash
 ./install.sh --uninstall
 ```
 
-它會停用並移除同步服務、移除三個連結，再還原安裝前的 `classicui.conf`。如果安裝前沒有這個檔案，就直接把它刪掉。
+它會停用並移除同步服務、移除三個連結，再還原安裝前的 `classicui.conf`（如果安裝前沒有這個檔案，就直接把它刪掉）。從 Release 安裝的，也會一併刪掉 `~/.local/share/fcitx5-notepaper/`。
 
 ## 自訂
 
@@ -85,6 +109,7 @@ templates/           theme.conf、SVG、字型別名、classicui.conf 的模板
 tools/build.py       從 tokens 和模板產生 dist/
 tools/sync_theme.py  深淺色同步服務
 tools/snapshot.py    截圖工具
+tools/package.sh     打包 Release 用的 tar.gz
 dist/                產生出來的主題（納入版本控制，可以直接用）
 install.sh           安裝與解除安裝
 DESIGN.md            設計說明、fcitx5 的限制與對策、已知限制

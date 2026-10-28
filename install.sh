@@ -3,9 +3,14 @@
 #   ./install.sh               link the themes, switch classicui to them, and start
 #                              the service that keeps Theme= in step with light/dark
 #   ./install.sh --uninstall   undo all of that and restore classicui.conf
+#
+# Run from a git checkout, everything links back to the checkout, so rebuilt
+# themes apply at once. Run from anything else (a release download), it first
+# copies itself to $INSTALL_DIR and installs from there, so the download can go.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+INSTALL_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/fcitx5-notepaper"
 THEMES_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/fcitx5/themes"
 CONF="${XDG_CONFIG_HOME:-$HOME/.config}/fcitx5/conf/classicui.conf"
 BACKUP="$CONF.before-notepaper"
@@ -14,23 +19,47 @@ SERVICE=notepaper-theme-sync.service
 SERVICE_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user/$SERVICE"
 THEMES=(notepaper notepaper-dark)
 
+is_copy_install() { [[ ! -e "$ROOT/.git" && "$ROOT" != "$INSTALL_DIR" ]]; }
+
+# Everything the installed themes and the sync service need at run time.
+copy_to_install_dir() {
+    rm -rf "${INSTALL_DIR:?}"
+    mkdir -p "$INSTALL_DIR/tools"
+    # No --preserve: a fresh mtime on the font alias is what tells reload_fcitx5 to restart.
+    cp -r "$ROOT/install.sh" "$ROOT/dist" "$ROOT/LICENSE" "$INSTALL_DIR/"
+    cp "$ROOT/tools/sync_theme.py" "$INSTALL_DIR/tools/"
+    echo "copied to $INSTALL_DIR"
+}
+
 fcitx5_call() {
     gdbus call --session --dest org.fcitx.Fcitx5 --object-path /controller \
         --method "org.fcitx.Fcitx.Controller1.$1" "${@:2}" >/dev/null 2>&1
 }
 
 reload_fcitx5() {
-    local pid
+    local pid started
     pid="$(pgrep -x fcitx5 | head -n1 || true)"
     if [[ -z "$pid" ]]; then
         echo "fcitx5 is not running; the themes apply on its next start"
-    # fcitx5 reads fontconfig once at startup, so a new or changed alias needs a restart.
-    elif [[ -e "$FONTCONFIG" && "$(readlink -f "$FONTCONFIG")" -nt "/proc/$pid" ]]; then
+        return
+    fi
+    started="$(stat -c %Y "/proc/$pid")"
+    # fcitx5 reads fontconfig once at startup, so it must restart when the alias link
+    # was (re)pointed or the file it points to changed since then.
+    if [[ -L "$FONTCONFIG" ]] &&
+        (($(stat -c %Y "$FONTCONFIG") > started || $(stat -L -c %Y "$FONTCONFIG") > started)); then
         fcitx5_call Restart && echo "restarted fcitx5 to load the font alias"
     # `fcitx5-remote -r` does not reload the classic UI, so ask for it by name.
     else
         fcitx5_call ReloadAddonConfig classicui && echo "reloaded fcitx5 classicui"
     fi
+}
+
+# Point $2 at $1, leaving an existing correct link alone so its mtime stays meaningful.
+link() {
+    [[ "$(readlink "$2" || true)" == "$1" ]] && return
+    ln -sfn "$1" "$2"
+    echo "linked $2"
 }
 
 # GTK and Qt Wayland apps draw their own candidate window from Theme= alone,
@@ -95,11 +124,9 @@ install() {
             echo "$target exists and is not a link; leaving it alone" >&2
             exit 1
         fi
-        ln -sfn "$ROOT/dist/$theme" "$target"
-        echo "linked $target"
+        link "$ROOT/dist/$theme" "$target"
     done
-    ln -sfn "$ROOT/dist/fontconfig/60-notepaper.conf" "$FONTCONFIG"
-    echo "linked $FONTCONFIG"
+    link "$ROOT/dist/fontconfig/60-notepaper.conf" "$FONTCONFIG"
 
     # Keep the user's original config once; an empty backup means there was none.
     if [[ ! -e "$BACKUP" ]]; then
@@ -132,10 +159,26 @@ uninstall() {
         echo "restored $CONF"
     fi
     reload_fcitx5
+    # Last, since this script may be running from inside it.
+    if [[ "$ROOT" == "$INSTALL_DIR" ]]; then
+        rm -rf "${INSTALL_DIR:?}"
+        echo "removed $INSTALL_DIR"
+    fi
 }
 
 case "${1:-}" in
-    "") install ;;
-    --uninstall) uninstall ;;
+    "")
+        if is_copy_install; then
+            copy_to_install_dir
+            exec "$INSTALL_DIR/install.sh"
+        fi
+        install
+        ;;
+    --uninstall)
+        if is_copy_install && [[ -x "$INSTALL_DIR/install.sh" ]]; then
+            exec "$INSTALL_DIR/install.sh" --uninstall
+        fi
+        uninstall
+        ;;
     *) echo "usage: $0 [--uninstall]" >&2; exit 2 ;;
 esac

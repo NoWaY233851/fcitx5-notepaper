@@ -1,4 +1,5 @@
 __pycache__/
+build/
 
 # Private notes and personal Claude settings; never commit.
 private/

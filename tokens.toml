@@ -1,0 +1,64 @@
+# 便箋 Notepaper design tokens: the single source of truth (DESIGN.md §3).
+# tools/build.py turns these into dist/<theme>/. Sizes are 1x pixels.
+
+[meta]
+author = "NoWaY233851"
+version = 1
+
+# build.py writes a fontconfig alias named `family` that falls back from
+# `latin` to `cjk`. Medium, because at 11pt the Regular serif's thin
+# horizontal strokes render as faint gray lines, worst on dark paper.
+[font]
+family = "Notepaper"
+latin = "Fira Sans"
+cjk = "Noto Serif CJK TC Medium"
+size = 11
+menu = "Fira Sans 10"
+
+[size]
+panel_radius = 8
+panel_border = 1
+panel_inset = 3        # border inner edge -> highlight edge; panel_radius - panel_inset = hl_radius
+shadow_spread = 8      # how far the shadow reaches past the note
+shadow_blur = 3        # Gaussian standard deviation
+shadow_offset_y = 2
+cell_padding_x = 7     # TextMargin left/right; the highlight fills the whole cell
+cell_padding_y = 5     # TextMargin top/bottom; must be >= hl_radius
+hl_radius = 5
+mark_width = 7
+mark_height = 2
+mark_nudge_x = 0       # shift from the label's left edge
+mark_offset_y = 4      # distance from the highlight's bottom edge
+arrow_width = 4
+arrow_height = 8
+arrow_stroke = 1.5
+menu_padding_x = 10
+menu_padding_y = 5
+
+[themes.light]
+dir = "notepaper"
+name = "Notepaper"
+name_zh_tw = "便箋"
+description = "A quiet note on paper: warm white, thin border, one terracotta accent."
+paper = "#FAF9F5"
+border = "#DAD6CA"
+ink = "#2D2B26"
+muted = "#6F6C63"
+hl = "#EDE9DF"
+accent = "#C15F3C"
+shadow = "#281E14"
+shadow_opacity = 0.07
+
+[themes.dark]
+dir = "notepaper-dark"
+name = "Notepaper Dark"
+name_zh_tw = "便箋（深色）"
+description = "The same note in the dark: warm charcoal, thin border, one terracotta accent."
+paper = "#262624"
+border = "#42413B"
+ink = "#E6E4DB"
+muted = "#9C998F"
+hl = "#383732"
+accent = "#D97757"
+shadow = "#000000"
+shadow_opacity = 0.30

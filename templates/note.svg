@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="$w" height="$h" viewBox="0 0 $w $h">
+  <defs>
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="$blur"/>
+    </filter>
+  </defs>
+  <rect x="$body_x" y="$shadow_y" width="$body_w" height="$body_h" rx="$radius" fill="$shadow" fill-opacity="$shadow_opacity" filter="url(#shadow)"/>
+  <rect x="$stroke_x" y="$stroke_y" width="$stroke_w" height="$stroke_h" rx="$stroke_r" fill="$paper" stroke="$border" stroke-width="$border_width"/>
+</svg>

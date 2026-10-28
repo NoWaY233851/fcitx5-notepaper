@@ -1,0 +1,5 @@
+__pycache__/
+
+# Private notes and personal Claude settings; never commit.
+private/
+CLAUDE.local.md

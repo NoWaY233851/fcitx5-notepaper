@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="38" height="38" viewBox="0 0 38 38">
+  <defs>
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3"/>
+    </filter>
+  </defs>
+  <rect x="8" y="8" width="22" height="22" rx="8" fill="#000000" fill-opacity="0.3" filter="url(#shadow)"/>
+  <rect x="8.5" y="6.5" width="21" height="21" rx="7.5" fill="#262624" stroke="#42413B" stroke-width="1"/>
+</svg>

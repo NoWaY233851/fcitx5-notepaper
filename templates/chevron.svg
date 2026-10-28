@@ -1,0 +1,3 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="$w" height="$h" viewBox="0 0 $w $h">
+  <polyline points="$points" fill="none" stroke="$stroke" stroke-width="$stroke_width" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
